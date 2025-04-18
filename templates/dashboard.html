@@ -1,0 +1,38 @@
+<!-- templates/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">📊 Dashboard</h2>
+
+  <div class="row">
+    <!-- User's Questions Section -->
+    <div class="col-md-6">
+      <div class="card p-3 mb-3 shadow-sm">
+        <h5>Your Questions ({{ questions.count }})</h5>
+        <ul>
+          {% for q in questions %}
+            <li><strong>{{ q.title }}</strong></li>
+          {% empty %}
+            <li>No questions yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- User's Answers Section -->
+    <div class="col-md-6">
+      <div class="card p-3 mb-3 shadow-sm">
+        <h5>Your Answers ({{ answers.count }})</h5>
+        <ul>
+          {% for a in answers %}
+            <li>Answer to: <strong>"{{ a.question.title }}"</strong></li>
+          {% empty %}
+            <li>No answers yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

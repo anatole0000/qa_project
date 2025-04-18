@@ -1,0 +1,14 @@
+<!-- core/templates/core/question_list.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>All Questions</h2>
+<ul>
+    {% for question in questions %}
+        <li><a href="{% url 'question_detail' pk=question.pk %}">{{ question.title }}</a></li>
+    {% empty %}
+        <li>No questions found.</li>
+    {% endfor %}
+</ul>
+<a href="{% url 'ask_question' %}">Ask a new question</a>
+{% endblock %}

@@ -1,0 +1,28 @@
+<!-- core/templates/core/question_detail.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ question.title }}</h2>
+<p>{{ question.description }}</p>
+<p><strong>Asked by:</strong> {{ question.user.username }} on {{ question.created_at }}</p>
+
+<h3>Answers</h3>
+<ul>
+    {% for answer in answers %}
+        <li>{{ answer.content }} - <em>{{ answer.user.username }} on {{ answer.created_at }}</em></li>
+    {% empty %}
+        <li>No answers yet.</li>
+    {% endfor %}
+</ul>
+
+{% if user.is_authenticated %}
+    <h3>Submit an Answer</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ answer_form.as_p }}
+        <button type="submit">Submit Answer</button>
+    </form>
+{% else %}
+    <p>You need to be logged in to answer questions.</p>
+{% endif %}
+{% endblock %}
