@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from .forms import RegisterForm
 from django.contrib.auth.forms import AuthenticationForm
@@ -6,6 +6,10 @@ from .models import Question, Answer
 from django.contrib.auth.decorators import login_required
 from .models import Question, Answer
 from .forms import QuestionForm, AnswerForm
+from .models import Answer, Vote
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.db.models import Sum
 
 def register_view(request):
     if request.method == 'POST':
@@ -92,3 +96,53 @@ def ask_question(request):
     else:
         form = QuestionForm()
     return render(request, 'core/ask_question.html', {'form': form})
+
+@csrf_exempt
+def vote_answer(request, answer_id, vote_type):
+    if request.method == 'POST':
+        try:
+            # Get the vote value (1 for upvote, -1 for downvote)
+            vote_value = 1 if vote_type == 'up' else -1
+
+            # Assuming the user is logged in and there is an Answer object
+            answer = Answer.objects.get(id=answer_id)
+            vote, created = Vote.objects.get_or_create(
+                user=request.user,
+                answer=answer,
+                defaults={'value': vote_value}  # Set the vote value on creation
+            )
+
+            if not created:
+                # If the vote already exists, update the value
+                vote.value = vote_value
+                vote.save()
+
+            # Return the new vote count for the answer
+            vote_count = Vote.objects.filter(answer=answer).aggregate(Sum('value'))['value__sum'] or 0
+
+            return JsonResponse({'success': True, 'vote_count': vote_count})
+
+        except Answer.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Answer not found'}, status=404)
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+ 
+
+@csrf_exempt  # or use @login_required + handle csrf in frontend
+@login_required
+def vote_answer_ajax(request, answer_id, vote_type):
+    if request.method == 'POST':
+        try:
+            answer = Answer.objects.get(pk=answer_id)
+            vote_value = 1 if vote_type == 'up' else -1
+
+            vote, created = Vote.objects.get_or_create(user=request.user, answer=answer)
+            vote.value = vote_value
+            vote.save()
+
+            vote_count = answer.vote_count()
+            return JsonResponse({'success': True, 'vote_count': vote_count})
+        except Answer.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Answer not found'})
+    return JsonResponse({'success': False, 'message': 'Invalid request'})
